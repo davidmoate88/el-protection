@@ -13,6 +13,8 @@ function deviceSummary(device: Device): string {
       return `Definite time — pickup ${device.pickupA}A, ${device.timeS}s`;
     case "thermal-replica":
       return `Thermal replica — IB ${device.ratedCurrentA}A, k ${device.kFactor}, τ ${device.thermalConstantMin}min, prior load ${device.priorLoadA}A`;
+    case "mcb":
+      return `MCB ${device.shape} (BS/IEC 60898-1) — In ${device.ratedCurrentA}A`;
   }
 }
 

@@ -23,12 +23,13 @@ function toDraft(device: Device): Draft {
     name: device.name,
     notes: device.notes ?? "",
     family: device.family,
-    shape: device.family === "iec-inverse" || device.family === "ieee-inverse" ? device.shape : "SI",
+    shape: device.family === "iec-inverse" || device.family === "ieee-inverse" || device.family === "mcb" ? device.shape : "SI",
     pickupA: "pickupA" in device ? String(device.pickupA) : "100",
     tms: device.family === "iec-inverse" ? String(device.tms) : "0.2",
     td: device.family === "ieee-inverse" ? String(device.td) : "1",
     timeS: device.family === "definite-time" ? String(device.timeS) : "0.5",
-    ratedCurrentA: device.family === "thermal-replica" ? String(device.ratedCurrentA) : "100",
+    ratedCurrentA:
+      device.family === "thermal-replica" || device.family === "mcb" ? String(device.ratedCurrentA) : "100",
     kFactor: device.family === "thermal-replica" ? String(device.kFactor) : "1.1",
     thermalConstantMin: device.family === "thermal-replica" ? String(device.thermalConstantMin) : "10",
     priorLoadA: device.family === "thermal-replica" ? String(device.priorLoadA) : "0",
@@ -54,6 +55,8 @@ function draftToDevice(draft: Draft, id: string, color: string): Device {
         thermalConstantMin: num(draft.thermalConstantMin),
         priorLoadA: num(draft.priorLoadA),
       };
+    case "mcb":
+      return { ...common, family: "mcb", shape: draft.shape as "B" | "C" | "D", ratedCurrentA: num(draft.ratedCurrentA) };
   }
 }
 
@@ -83,9 +86,14 @@ export function DeviceEditor({
             onChange={(e) => {
               const family = e.target.value as Device["family"];
               set("family", family);
-              if ((family === "iec-inverse" && draft.shape !== "SI" && draft.shape !== "VI" && draft.shape !== "EI" && draft.shape !== "LTI") ||
-                (family === "ieee-inverse" && draft.shape !== "MI" && draft.shape !== "VI" && draft.shape !== "EI")) {
-                set("shape", family === "iec-inverse" ? "SI" : "MI");
+              const shapesByFamily: Record<string, string[]> = {
+                "iec-inverse": ["SI", "VI", "EI", "LTI"],
+                "ieee-inverse": ["MI", "VI", "EI"],
+                mcb: ["B", "C", "D"],
+              };
+              const validShapes = shapesByFamily[family];
+              if (validShapes && !validShapes.includes(draft.shape)) {
+                set("shape", validShapes[0]);
               }
             }}
             style={{ width: "100%" }}
@@ -94,25 +102,32 @@ export function DeviceEditor({
             <option value="ieee-inverse">IEEE inverse-time (C37.112)</option>
             <option value="definite-time">Definite time</option>
             <option value="thermal-replica">Thermal replica (60255-149)</option>
+            <option value="mcb">MCB (BS/IEC 60898-1)</option>
           </select>
         </label>
 
-        {(draft.family === "iec-inverse" || draft.family === "ieee-inverse") && (
+        {(draft.family === "iec-inverse" || draft.family === "ieee-inverse" || draft.family === "mcb") && (
           <label>
             Shape
             <select value={draft.shape} onChange={(e) => set("shape", e.target.value)} style={{ width: "100%" }}>
-              {draft.family === "iec-inverse"
-                ? ["SI", "VI", "EI", "LTI"].map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))
-                : ["MI", "VI", "EI"].map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
+              {(draft.family === "iec-inverse"
+                ? ["SI", "VI", "EI", "LTI"]
+                : draft.family === "ieee-inverse"
+                  ? ["MI", "VI", "EI"]
+                  : ["B", "C", "D"]
+              ).map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
             </select>
+          </label>
+        )}
+
+        {draft.family === "mcb" && (
+          <label>
+            Rated current In (A)
+            <input type="number" value={draft.ratedCurrentA} onChange={(e) => set("ratedCurrentA", e.target.value)} style={{ width: "100%" }} />
           </label>
         )}
 

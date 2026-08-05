@@ -46,8 +46,16 @@ export type ThermalReplicaSettings = {
   priorLoadA: number; // Ip, steady current before the overload step (0 = cold curve)
 };
 
+// MCB (BS/IEC 60898-1) B/C/D characteristics. Fixed-characteristic devices
+// (not field-adjustable like a relay) - only shape and rated current apply.
+export type McbSettings = {
+  family: "mcb";
+  shape: "B" | "C" | "D";
+  ratedCurrentA: number; // In
+};
+
 export type Device = DeviceCommon &
-  (IecInverseSettings | IeeeInverseSettings | DefiniteTimeSettings | ThermalReplicaSettings);
+  (IecInverseSettings | IeeeInverseSettings | DefiniteTimeSettings | ThermalReplicaSettings | McbSettings);
 
 type DamageCurveCommon = {
   id: string;

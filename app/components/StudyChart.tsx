@@ -23,6 +23,8 @@ function deviceLabel(device: Device): string {
       return `${device.name} (DT, ${device.pickupA}A, ${device.timeS}s)`;
     case "thermal-replica":
       return `${device.name} (thermal, ${device.ratedCurrentA}A x${device.kFactor})`;
+    case "mcb":
+      return `${device.name} (MCB ${device.shape}, ${device.ratedCurrentA}A)`;
   }
 }
 

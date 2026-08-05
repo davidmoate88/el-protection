@@ -13,6 +13,8 @@ export function defaultDeviceForFamily(family: Device["family"], id: string, col
       return { ...common, family, pickupA: 100, timeS: 0.5 };
     case "thermal-replica":
       return { ...common, family, ratedCurrentA: 100, kFactor: 1.1, thermalConstantMin: 10, priorLoadA: 0 };
+    case "mcb":
+      return { ...common, family, shape: "B", ratedCurrentA: 32 };
   }
 }
 
