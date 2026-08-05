@@ -94,3 +94,47 @@ td {
   text-align: left;
   font-size: 0.9rem;
 }
+
+.report-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.report-header {
+  margin-bottom: 16px;
+}
+
+.report-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.report section {
+  margin-bottom: 24px;
+  break-inside: avoid;
+}
+
+.report-chart {
+  break-inside: avoid;
+}
+
+@media print {
+  /* Force a light, ink-friendly palette regardless of system dark mode —
+     a dark report page wastes ink and most browsers won't honor
+     prefers-color-scheme differently for print without this override. */
+  :root {
+    --bg: #ffffff;
+    --panel: #ffffff;
+    --ink: #000000;
+    --muted: #444444;
+    --rule: #999999;
+    --danger: #b3261e;
+    --ok: #1e6b1e;
+  }
+
+  .report-toolbar {
+    display: none;
+  }
+}

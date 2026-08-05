@@ -106,16 +106,19 @@ export default function Home() {
     <main style={{ padding: 24, maxWidth: 1100, margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
         <h1>{study.name}</h1>
-        <ConfirmButton
-          label="Reset all saved data"
-          confirmLabel="This clears the whole study."
-          onConfirm={() => {
-            clearStudy();
-            const fresh = createSeedStudy();
-            setStudy(fresh);
-            setActiveLocationId(fresh.locations[0]?.id ?? null);
-          }}
-        />
+        <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <a href="/report">View report</a>
+          <ConfirmButton
+            label="Reset all saved data"
+            confirmLabel="This clears the whole study."
+            onConfirm={() => {
+              clearStudy();
+              const fresh = createSeedStudy();
+              setStudy(fresh);
+              setActiveLocationId(fresh.locations[0]?.id ?? null);
+            }}
+          />
+        </span>
       </div>
 
       <div style={{ marginBottom: 12 }}>
