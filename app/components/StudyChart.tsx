@@ -1,5 +1,6 @@
 import type { DamageCurve, Device, FaultLocation } from "@/lib/types";
 import { damageCurveWithstandTime, deviceTripTime } from "@/lib/deviceEngine";
+import { resolveFaultCurrents } from "@/lib/faultCurrentEngine";
 import { sampleCurve } from "@/lib/curveSampling";
 import { LogLogChart, type ReferenceLine, type SampledCurve, type ViolationRegion } from "./LogLogChart";
 import { CURVE_PALETTE } from "../lib/palette";
@@ -73,20 +74,23 @@ export function StudyChart({
   }));
 
   const referenceLines: ReferenceLine[] = faultLocation
-    ? [
-        {
-          key: `${faultLocation.id}-max`,
-          label: `Ik max – ${faultLocation.name}`,
-          value: faultLocation.ikMaxA,
-          color: "var(--danger)",
-        },
-        {
-          key: `${faultLocation.id}-min`,
-          label: `Ik min – ${faultLocation.name}`,
-          value: faultLocation.ikMinA,
-          color: "var(--muted)",
-        },
-      ]
+    ? (() => {
+        const { ikMaxA, ikMinA } = resolveFaultCurrents(faultLocation);
+        return [
+          {
+            key: `${faultLocation.id}-max`,
+            label: `Ik max – ${faultLocation.name}`,
+            value: ikMaxA,
+            color: "var(--danger)",
+          },
+          {
+            key: `${faultLocation.id}-min`,
+            label: `Ik min – ${faultLocation.name}`,
+            value: ikMinA,
+            color: "var(--muted)",
+          },
+        ];
+      })()
     : [];
 
   return (

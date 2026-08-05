@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Device, FaultLocation, GradingCheck } from "@/lib/types";
 import { deviceTripTime } from "@/lib/deviceEngine";
 import { computeGradingMargin } from "@/lib/gradingEngine";
+import { resolveFaultCurrents } from "@/lib/faultCurrentEngine";
 import { ConfirmButton } from "./ConfirmButton";
 
 // Margin is the minimum separation between the upstream and downstream
@@ -32,10 +33,11 @@ function MarginRow({
   const location = locations.find((l) => l.id === check.faultLocationId);
   if (!upstream || !downstream || !location) return null;
 
+  const { ikMinA, ikMaxA } = resolveFaultCurrents(location);
   const result = computeGradingMargin(
     (current) => deviceTripTime(upstream, current),
     (current) => deviceTripTime(downstream, current),
-    { currentMin: location.ikMinA, currentMax: location.ikMaxA },
+    { currentMin: ikMinA, currentMax: ikMaxA },
   );
 
   const status = !result.valid ? "no-overlap" : result.minMarginS <= 0 ? "fail" : result.minMarginS < targetMarginS ? "warn" : "pass";

@@ -120,19 +120,64 @@ export type BusbarThermalSettings = {
 export type DamageCurve = DamageCurveCommon &
   (CableAdiabaticSettings | TransformerC57109Settings | BusbarThermalSettings);
 
-export type FaultLocation = {
-  id: string;
-  name: string;
+// IEC 60909-0 radial-chain fault-current calculation. This is deliberately
+// NOT a shared network topology graph (nodes/edges reused across fault
+// locations) — each fault location owns its own chain from a network feeder,
+// through an optional transformer, through zero or more cable segments in
+// series, to the fault point. That keeps the tool's "no topology model" shape
+// (see the note below) while still letting the fault current itself be
+// calculated instead of typed in by hand. See lib/faultCurrentEngine.ts for
+// the verified formulas.
+export type NetworkFeederSettings = {
+  nominalVoltageKv: number; // Un at the connection point
+  shortCircuitPowerMva: number; // Sk" at the connection point
+  xrRatio: number; // X/R ratio — enter the DNO/utility's value if given
+};
+
+export type FaultTransformerSettings = {
+  ratedKva: number;
+  ratedVoltageHvKv: number; // reference only (not used in the calculation)
+  ratedVoltageLvKv: number; // the side the fault current is calculated on
+  ukPercent: number; // uk, the rated short-circuit (impedance) voltage
+  xrRatio: number; // X/R ratio of the transformer's own impedance
+};
+
+// R'/X' are entered directly (matching this project's established
+// discipline of transcribing real datasheet values rather than deriving
+// them from a lookup table) since AC resistance/reactance per unit length
+// depend on cable construction/spacing, not just CSA and material.
+export type FaultCableSettings = {
+  csaMm2: number; // reference only (not used in the calculation)
+  lengthM: number;
+  resistancePerKmOhm: number; // R'
+  reactancePerKmOhm: number; // X'
+};
+
+export type ManualFaultSettings = {
+  mode: "manual";
   ikMaxA: number;
   ikMinA: number;
 };
 
+export type CalculatedFaultSettings = {
+  mode: "calculated";
+  feeder: NetworkFeederSettings;
+  transformer?: FaultTransformerSettings;
+  cables: FaultCableSettings[];
+};
+
+export type FaultLocation = {
+  id: string;
+  name: string;
+} & (ManualFaultSettings | CalculatedFaultSettings);
+
 // Explicit, user-declared pairs — NOT auto-inferred from matching locationId.
 // A downstream cable's damage curve is routinely checked against an upstream
 // device at a different network point; same-location matching would miss
-// exactly that case, and this tool has no topology model (by design — no
-// fault-calc engine). locationId on Device/DamageCurve stays only as a UI
-// default-prefill for these.
+// exactly that case, and this tool has no shared network topology (each
+// FaultLocation's own calculated chain, above, is self-contained — there's
+// still no cross-location topology graph). locationId on Device/DamageCurve
+// stays only as a UI default-prefill for these.
 export type GradingCheck = {
   id: string;
   upstreamDeviceId: string;

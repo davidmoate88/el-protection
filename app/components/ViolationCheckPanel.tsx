@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { DamageCurve, Device, FaultLocation, ViolationCheck } from "@/lib/types";
 import { damageCurveWithstandTime, deviceTripTime } from "@/lib/deviceEngine";
 import { computeGradingMargin } from "@/lib/gradingEngine";
+import { resolveFaultCurrents } from "@/lib/faultCurrentEngine";
 import { ConfirmButton } from "./ConfirmButton";
 
 function ViolationRow({
@@ -33,10 +34,11 @@ function ViolationRow({
   // violation that only occurs over part of the range (caught by hand-
   // verifying against the curve formulas directly during Phase 5
   // verification — the first version had exactly this bug).
+  const { ikMinA, ikMaxA } = resolveFaultCurrents(location);
   const result = computeGradingMargin(
     (current) => damageCurveWithstandTime(damageCurve, current),
     (current) => deviceTripTime(device, current),
-    { currentMin: location.ikMinA, currentMax: location.ikMaxA },
+    { currentMin: ikMinA, currentMax: ikMaxA },
   );
   const violates = result.valid && result.minMarginS <= 0;
   const status = !result.valid ? "no-overlap" : violates ? "violation" : "protected";

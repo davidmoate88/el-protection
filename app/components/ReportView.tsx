@@ -1,6 +1,7 @@
 import type { DamageCurve, Device, Study } from "@/lib/types";
 import { damageCurveWithstandTime, deviceTripTime } from "@/lib/deviceEngine";
 import { computeGradingMargin } from "@/lib/gradingEngine";
+import { resolveFaultCurrents } from "@/lib/faultCurrentEngine";
 import { StudyChart } from "./StudyChart";
 
 function deviceSummary(device: Device): string {
@@ -94,13 +95,16 @@ export function ReportView({ study }: { study: Study }) {
             </tr>
           </thead>
           <tbody>
-            {study.locations.map((l) => (
-              <tr key={l.id}>
-                <td>{l.name}</td>
-                <td>{l.ikMaxA}A</td>
-                <td>{l.ikMinA}A</td>
-              </tr>
-            ))}
+            {study.locations.map((l) => {
+              const { ikMaxA, ikMinA } = resolveFaultCurrents(l);
+              return (
+                <tr key={l.id}>
+                  <td>{l.name}</td>
+                  <td>{ikMaxA.toFixed(0)}A</td>
+                  <td>{ikMinA.toFixed(0)}A</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </section>
@@ -132,10 +136,11 @@ export function ReportView({ study }: { study: Study }) {
                 const downstream = study.devices.find((d) => d.id === check.downstreamDeviceId);
                 const location = study.locations.find((l) => l.id === check.faultLocationId);
                 if (!upstream || !downstream || !location) return null;
+                const { ikMinA, ikMaxA } = resolveFaultCurrents(location);
                 const result = computeGradingMargin(
                   (current) => deviceTripTime(upstream, current),
                   (current) => deviceTripTime(downstream, current),
-                  { currentMin: location.ikMinA, currentMax: location.ikMaxA },
+                  { currentMin: ikMinA, currentMax: ikMaxA },
                 );
                 return (
                   <tr key={check.id}>
@@ -175,10 +180,11 @@ export function ReportView({ study }: { study: Study }) {
                 const damageCurve = study.damageCurves.find((c) => c.id === check.damageCurveId);
                 const location = study.locations.find((l) => l.id === check.faultLocationId);
                 if (!device || !damageCurve || !location) return null;
+                const { ikMinA, ikMaxA } = resolveFaultCurrents(location);
                 const result = computeGradingMargin(
                   (current) => damageCurveWithstandTime(damageCurve, current),
                   (current) => deviceTripTime(device, current),
-                  { currentMin: location.ikMinA, currentMax: location.ikMaxA },
+                  { currentMin: ikMinA, currentMax: ikMaxA },
                 );
                 return (
                   <tr key={check.id}>

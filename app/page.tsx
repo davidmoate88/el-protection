@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { DamageCurve, Device, FaultLocation, GradingCheck, Study, ViolationCheck } from "@/lib/types";
 import { damageCurveWithstandTime, deviceTripTime } from "@/lib/deviceEngine";
 import { computeViolationRegion } from "@/lib/gradingEngine";
+import { resolveFaultCurrents } from "@/lib/faultCurrentEngine";
 import { StudyChart } from "./components/StudyChart";
 import { DeviceList } from "./components/DeviceList";
 import { DamageCurveList } from "./components/DamageCurveList";
@@ -39,7 +40,7 @@ function createSeedStudy(): Study {
         parallelRuns: 1,
       },
     ],
-    locations: [{ id: crypto.randomUUID(), name: "Feeder board", ikMaxA: 5000, ikMinA: 800 }],
+    locations: [{ id: crypto.randomUUID(), name: "Feeder board", mode: "manual", ikMaxA: 5000, ikMinA: 800 }],
     gradingChecks: [],
     violationChecks: [],
   };
@@ -90,13 +91,14 @@ export default function Home() {
     const damageCurve = study.damageCurves.find((c) => c.id === check.damageCurveId);
     const location = study.locations.find((l) => l.id === check.faultLocationId);
     if (!device || !damageCurve || !location) return [];
+    const { ikMinA, ikMaxA } = resolveFaultCurrents(location);
     return [
       {
         key: check.id,
         points: computeViolationRegion(
           (current) => deviceTripTime(device, current),
           (current) => damageCurveWithstandTime(damageCurve, current),
-          { currentMin: location.ikMinA, currentMax: location.ikMaxA },
+          { currentMin: ikMinA, currentMax: ikMaxA },
         ),
       },
     ];
