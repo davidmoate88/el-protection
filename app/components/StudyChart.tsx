@@ -25,6 +25,8 @@ function deviceLabel(device: Device): string {
       return `${device.name} (thermal, ${device.ratedCurrentA}A x${device.kFactor})`;
     case "mcb":
       return `${device.name} (MCB ${device.shape}, ${device.ratedCurrentA}A)`;
+    case "mccb":
+      return `${device.name} (MCCB In ${device.ratedCurrentA}A, I1 ${device.longTimePickupA}A, I3 ${device.instantaneousPickupA}A)`;
   }
 }
 

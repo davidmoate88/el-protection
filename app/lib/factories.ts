@@ -15,6 +15,19 @@ export function defaultDeviceForFamily(family: Device["family"], id: string, col
       return { ...common, family, ratedCurrentA: 100, kFactor: 1.1, thermalConstantMin: 10, priorLoadA: 0 };
     case "mcb":
       return { ...common, family, shape: "B", ratedCurrentA: 32 };
+    case "mccb":
+      return {
+        ...common,
+        family,
+        ratedCurrentA: 250,
+        longTimePickupA: 250,
+        longTimeDelayS: 6,
+        shortTimeEnabled: true,
+        shortTimePickupA: 1500,
+        shortTimeDelayS: 0.1,
+        shortTimeI2tRamp: false,
+        instantaneousPickupA: 2500,
+      };
   }
 }
 

@@ -15,6 +15,12 @@ function deviceSummary(device: Device): string {
       return `Thermal replica — IB ${device.ratedCurrentA}A, k ${device.kFactor}, τ ${device.thermalConstantMin}min, prior load ${device.priorLoadA}A`;
     case "mcb":
       return `MCB ${device.shape} (BS/IEC 60898-1) — In ${device.ratedCurrentA}A`;
+    case "mccb": {
+      const s = device.shortTimeEnabled
+        ? `, I2 ${device.shortTimePickupA}A/${device.shortTimeDelayS}s (I²t ${device.shortTimeI2tRamp ? "ON" : "OFF"})`
+        : ", S excluded";
+      return `MCCB (IEC 60947-2 LSI) — In ${device.ratedCurrentA}A, I1 ${device.longTimePickupA}A/${device.longTimeDelayS}s@6xI1${s}, I3 ${device.instantaneousPickupA}A`;
+    }
   }
 }
 

@@ -54,8 +54,31 @@ export type McbSettings = {
   ratedCurrentA: number; // In
 };
 
+// MCCB (IEC 60947-2) electronic (LSI) trip unit. Unlike MCB, every threshold
+// is a field-adjustable setting (like a relay's pickupA), so there's no
+// single standard-fixed curve to calibrate against - see mccb.ts for what IS
+// standard/verified (the curve technology each zone uses).
+export type MccbSettings = {
+  family: "mccb";
+  ratedCurrentA: number; // In, the trip unit's rated/sensor current
+  longTimePickupA: number; // I1 / Ir - long-time (overload) pickup
+  longTimeDelayS: number; // t1, the trip time at 6x I1
+  shortTimeEnabled: boolean; // false: L hands off directly to instantaneous
+  shortTimePickupA: number; // I2 / Isd - short-time pickup (only used if enabled)
+  shortTimeDelayS: number; // t2 - flat delay (I2t off) or trip time at 8x In (I2t on)
+  shortTimeI2tRamp: boolean; // true = I2t=K ramp ("I2t ON"), false = flat delay ("I2t OFF")
+  instantaneousPickupA: number; // I3 / Ii
+};
+
 export type Device = DeviceCommon &
-  (IecInverseSettings | IeeeInverseSettings | DefiniteTimeSettings | ThermalReplicaSettings | McbSettings);
+  (
+    | IecInverseSettings
+    | IeeeInverseSettings
+    | DefiniteTimeSettings
+    | ThermalReplicaSettings
+    | McbSettings
+    | MccbSettings
+  );
 
 type DamageCurveCommon = {
   id: string;

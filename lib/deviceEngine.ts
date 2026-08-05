@@ -4,6 +4,7 @@ import { ieeeInverseTripTime } from "./relayCurves/ieeeInverse";
 import { definiteTimeTripTime } from "./relayCurves/definiteTime";
 import { thermalReplicaTripTime } from "./relayCurves/thermalReplica";
 import { mcbTripTime } from "./relayCurves/mcb";
+import { mccbTripTime } from "./relayCurves/mccb";
 import { cableAdiabaticWithstandTime } from "./damageCurves/cableAdiabatic";
 import { transformerC57109WithstandTime } from "./damageCurves/transformerC57109";
 import { busbarThermalWithstandTime } from "./damageCurves/busbarThermal";
@@ -31,6 +32,8 @@ export function deviceTripTime(device: Device, current: number): TripTimeResult 
       );
     case "mcb":
       return mcbTripTime(device.shape, device.ratedCurrentA, current);
+    case "mccb":
+      return mccbTripTime(device, current);
   }
 }
 

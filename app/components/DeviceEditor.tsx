@@ -16,6 +16,13 @@ type Draft = {
   kFactor: string;
   thermalConstantMin: string;
   priorLoadA: string;
+  longTimePickupA: string;
+  longTimeDelayS: string;
+  shortTimeEnabled: boolean;
+  shortTimePickupA: string;
+  shortTimeDelayS: string;
+  shortTimeI2tRamp: boolean;
+  instantaneousPickupA: string;
 };
 
 function toDraft(device: Device): Draft {
@@ -29,10 +36,19 @@ function toDraft(device: Device): Draft {
     td: device.family === "ieee-inverse" ? String(device.td) : "1",
     timeS: device.family === "definite-time" ? String(device.timeS) : "0.5",
     ratedCurrentA:
-      device.family === "thermal-replica" || device.family === "mcb" ? String(device.ratedCurrentA) : "100",
+      device.family === "thermal-replica" || device.family === "mcb" || device.family === "mccb"
+        ? String(device.ratedCurrentA)
+        : "100",
     kFactor: device.family === "thermal-replica" ? String(device.kFactor) : "1.1",
     thermalConstantMin: device.family === "thermal-replica" ? String(device.thermalConstantMin) : "10",
     priorLoadA: device.family === "thermal-replica" ? String(device.priorLoadA) : "0",
+    longTimePickupA: device.family === "mccb" ? String(device.longTimePickupA) : "250",
+    longTimeDelayS: device.family === "mccb" ? String(device.longTimeDelayS) : "6",
+    shortTimeEnabled: device.family === "mccb" ? device.shortTimeEnabled : true,
+    shortTimePickupA: device.family === "mccb" ? String(device.shortTimePickupA) : "1500",
+    shortTimeDelayS: device.family === "mccb" ? String(device.shortTimeDelayS) : "0.1",
+    shortTimeI2tRamp: device.family === "mccb" ? device.shortTimeI2tRamp : false,
+    instantaneousPickupA: device.family === "mccb" ? String(device.instantaneousPickupA) : "2500",
   };
 }
 
@@ -57,6 +73,19 @@ function draftToDevice(draft: Draft, id: string, color: string): Device {
       };
     case "mcb":
       return { ...common, family: "mcb", shape: draft.shape as "B" | "C" | "D", ratedCurrentA: num(draft.ratedCurrentA) };
+    case "mccb":
+      return {
+        ...common,
+        family: "mccb",
+        ratedCurrentA: num(draft.ratedCurrentA),
+        longTimePickupA: num(draft.longTimePickupA),
+        longTimeDelayS: num(draft.longTimeDelayS),
+        shortTimeEnabled: draft.shortTimeEnabled,
+        shortTimePickupA: num(draft.shortTimePickupA),
+        shortTimeDelayS: num(draft.shortTimeDelayS),
+        shortTimeI2tRamp: draft.shortTimeI2tRamp,
+        instantaneousPickupA: num(draft.instantaneousPickupA),
+      };
   }
 }
 
@@ -103,6 +132,7 @@ export function DeviceEditor({
             <option value="definite-time">Definite time</option>
             <option value="thermal-replica">Thermal replica (60255-149)</option>
             <option value="mcb">MCB (BS/IEC 60898-1)</option>
+            <option value="mccb">MCCB (IEC 60947-2 LSI)</option>
           </select>
         </label>
 
@@ -129,6 +159,77 @@ export function DeviceEditor({
             Rated current In (A)
             <input type="number" value={draft.ratedCurrentA} onChange={(e) => set("ratedCurrentA", e.target.value)} style={{ width: "100%" }} />
           </label>
+        )}
+
+        {draft.family === "mccb" && (
+          <>
+            <label>
+              Rated current In (A)
+              <input type="number" value={draft.ratedCurrentA} onChange={(e) => set("ratedCurrentA", e.target.value)} style={{ width: "100%" }} />
+            </label>
+            <label>
+              Long-time pickup I1 (A)
+              <input type="number" value={draft.longTimePickupA} onChange={(e) => set("longTimePickupA", e.target.value)} style={{ width: "100%" }} />
+            </label>
+            <label>
+              Long-time delay t1 (s @ 6xI1)
+              <input
+                type="number"
+                step="0.1"
+                value={draft.longTimeDelayS}
+                onChange={(e) => set("longTimeDelayS", e.target.value)}
+                style={{ width: "100%" }}
+              />
+            </label>
+            <label>
+              Instantaneous pickup I3 (A)
+              <input
+                type="number"
+                value={draft.instantaneousPickupA}
+                onChange={(e) => set("instantaneousPickupA", e.target.value)}
+                style={{ width: "100%" }}
+              />
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <input
+                type="checkbox"
+                checked={draft.shortTimeEnabled}
+                onChange={(e) => set("shortTimeEnabled", e.target.checked)}
+              />
+              Short-time protection (S) enabled
+            </label>
+            {draft.shortTimeEnabled && (
+              <>
+                <label>
+                  Short-time pickup I2 (A)
+                  <input
+                    type="number"
+                    value={draft.shortTimePickupA}
+                    onChange={(e) => set("shortTimePickupA", e.target.value)}
+                    style={{ width: "100%" }}
+                  />
+                </label>
+                <label>
+                  Short-time delay t2 (s)
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={draft.shortTimeDelayS}
+                    onChange={(e) => set("shortTimeDelayS", e.target.value)}
+                    style={{ width: "100%" }}
+                  />
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <input
+                    type="checkbox"
+                    checked={draft.shortTimeI2tRamp}
+                    onChange={(e) => set("shortTimeI2tRamp", e.target.checked)}
+                  />
+                  I²t ramp (unchecked = flat delay)
+                </label>
+              </>
+            )}
+          </>
         )}
 
         {(draft.family === "iec-inverse" || draft.family === "ieee-inverse" || draft.family === "definite-time") && (
