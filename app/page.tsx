@@ -1,13 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { DamageCurve, Device, FaultLocation, Study } from "@/lib/types";
+import type { DamageCurve, Device, FaultLocation, GradingCheck, Study, ViolationCheck } from "@/lib/types";
+import { damageCurveWithstandTime, deviceTripTime } from "@/lib/deviceEngine";
+import { computeViolationRegion } from "@/lib/gradingEngine";
 import { StudyChart } from "./components/StudyChart";
 import { DeviceList } from "./components/DeviceList";
 import { DamageCurveList } from "./components/DamageCurveList";
 import { FaultLocationList } from "./components/FaultLocationEditor";
+import { GradingMarginTable } from "./components/GradingMarginTable";
+import { ViolationCheckPanel } from "./components/ViolationCheckPanel";
 import { ConfirmButton } from "./components/ConfirmButton";
 import { clearStudy, loadStudy, saveStudy } from "./lib/storage";
+import type { ViolationRegion } from "./components/LogLogChart";
 
 // First-run seed (only used when nothing is in localStorage yet) — a real,
 // working example rather than a blank study, mirroring the Phase 3 demo.
@@ -76,7 +81,26 @@ export default function Home() {
       setActiveLocationId(locations[0]?.id ?? null);
     }
   };
+  const setGradingChecks = (gradingChecks: GradingCheck[]) => update({ gradingChecks });
+  const setViolationChecks = (violationChecks: ViolationCheck[]) => update({ violationChecks });
   const activeLocation = study.locations.find((l) => l.id === activeLocationId);
+
+  const violationRegions: ViolationRegion[] = study.violationChecks.flatMap((check) => {
+    const device = study.devices.find((d) => d.id === check.deviceId);
+    const damageCurve = study.damageCurves.find((c) => c.id === check.damageCurveId);
+    const location = study.locations.find((l) => l.id === check.faultLocationId);
+    if (!device || !damageCurve || !location) return [];
+    return [
+      {
+        key: check.id,
+        points: computeViolationRegion(
+          (current) => deviceTripTime(device, current),
+          (current) => damageCurveWithstandTime(damageCurve, current),
+          { currentMin: location.ikMinA, currentMax: location.ikMaxA },
+        ),
+      },
+    ];
+  });
 
   return (
     <main style={{ padding: 24, maxWidth: 1100, margin: "0 auto" }}>
@@ -108,7 +132,12 @@ export default function Home() {
         </label>
       </div>
 
-      <StudyChart devices={study.devices} damageCurves={study.damageCurves} faultLocation={activeLocation} />
+      <StudyChart
+        devices={study.devices}
+        damageCurves={study.damageCurves}
+        faultLocation={activeLocation}
+        violationRegions={violationRegions}
+      />
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginTop: 24 }}>
         <DeviceList devices={study.devices} onChange={setDevices} />
@@ -117,6 +146,25 @@ export default function Home() {
 
       <div style={{ marginTop: 24 }}>
         <FaultLocationList locations={study.locations} onChange={setLocations} />
+      </div>
+
+      <div style={{ marginTop: 24 }}>
+        <GradingMarginTable
+          devices={study.devices}
+          locations={study.locations}
+          checks={study.gradingChecks}
+          onChange={setGradingChecks}
+        />
+      </div>
+
+      <div style={{ marginTop: 24 }}>
+        <ViolationCheckPanel
+          devices={study.devices}
+          damageCurves={study.damageCurves}
+          locations={study.locations}
+          checks={study.violationChecks}
+          onChange={setViolationChecks}
+        />
       </div>
     </main>
   );

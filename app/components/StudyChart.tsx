@@ -1,7 +1,7 @@
 import type { DamageCurve, Device, FaultLocation } from "@/lib/types";
 import { damageCurveWithstandTime, deviceTripTime } from "@/lib/deviceEngine";
 import { sampleCurve } from "@/lib/curveSampling";
-import { LogLogChart, type ReferenceLine, type SampledCurve } from "./LogLogChart";
+import { LogLogChart, type ReferenceLine, type SampledCurve, type ViolationRegion } from "./LogLogChart";
 import { CURVE_PALETTE } from "../lib/palette";
 
 // Shared sampling range for every curve on the chart. Curves that are only
@@ -41,12 +41,14 @@ export function StudyChart({
   devices,
   damageCurves,
   faultLocation,
+  violationRegions = [],
   xDecades = X_DECADES,
   yDecades = Y_DECADES,
 }: {
   devices: Device[];
   damageCurves: DamageCurve[];
   faultLocation?: FaultLocation;
+  violationRegions?: ViolationRegion[];
   xDecades?: [number, number];
   yDecades?: [number, number];
 }) {
@@ -91,6 +93,7 @@ export function StudyChart({
       yDecades={yDecades}
       curves={[...deviceCurves, ...damageCurveCurves]}
       referenceLines={referenceLines}
+      violationRegions={violationRegions}
     />
   );
 }
